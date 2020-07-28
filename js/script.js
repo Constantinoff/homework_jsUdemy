@@ -32,9 +32,9 @@ window.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    //Обработчик событий для показа тамба при клике
+    //Обработчик событий для показа таба при клике
 
-    info.addEventListener('click', function(event) {
+    info.addEventListener('click', (event) => {
         let target = event.target;
         
     // Если произошёл "клик" и кликнутый эл-нт содержит класс 'info-header-tab'
@@ -52,7 +52,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
     // TIMER
 
-    let deadLine = '2020-07-21'; //КОНЕЧНАЯ ДАТА
+    let deadLine = '2020-08-1'; //КОНЕЧНАЯ ДАТА
 
     // Фун-ция определяюща остаток времени
     function getTimeRemaining(endTime) {
@@ -98,7 +98,7 @@ window.addEventListener('DOMContentLoaded', function() {
             minutes.textContent = addZero(t.mins);
             seconds.textContent = addZero(t.seconds);
 
-            // Условие окончания отчсёта таймера
+            // Условие окончания отчсёта таймера и обнуления
             if (t.total <= 0) {
                 clearInterval(timeInterval);
                 hours.textContent = '00';
@@ -109,5 +109,131 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 
     setClock('timer', deadLine); //Вызываем ф-цию с аргументом id #timer
+    
+    //////// Modal Window ///////////
+
+    let more = document.querySelector('.more'),
+        overlay = document.querySelector('.overlay'),
+        close = document.querySelector('.popup-close'),
+        descriptionBtns = document.querySelectorAll('.description-btn');
+
+        more.addEventListener('click', () => {
+            overlay.style.display = 'block'; //make .overlay visible
+            this.classList.add('more-splash'); //add animation, this. -
+            // обращение к кнопке, которую нажали
+            document.body.style.overflow = 'hidden'; //blocks page scrolling
+        });
+
+        close.addEventListener('click', () => {
+            overlay.style.display = 'none';
+            this.classList.remove('more-splash');
+            document.body.style.overflow = ''; //remowes overflow 'hidden'
+        });
+
+        descriptionBtns.forEach(function(item) {
+            item.addEventListener('click', function() {
+                overlay.style.display = 'block';
+                this.classList.add('more-splash');
+                document.body.style.overflow = 'hidden';
+            });
+        });
+
+        //////// Form //////////
+
+        //Создаём объект в котором будет информация о состоянии запроса
+        let message = {
+            loading: 'Загрузка...', //будет показываться польз., пока запрос не обработан
+            success: 'Спасибо! Скоро мы с Вами свяжемся!',
+            failure: 'Что-то пошло не так!'
+        };
+
+        let form = document.querySelector('.main-form'),
+            input = form.getElementsByTagName('input'),
+            //переменная, которая будет принимать знач. message и выводить на страницу, чтобы оповестить пользователя, 
+            statusMessage = document.createElement('div');
+
+            statusMessage.classList.add('status');
+        //Обрабочтик вешается не на отдельный submit button, а на ФОРМУ ЦЕЛИКОМ!!!
+        form.addEventListener('submit', function(event) {
+            //Поведение браузера по дефолту: click on submit => restart page, чтобы этого не было:
+            event.preventDefault();
+            form.appendChild(statusMessage);
+
+            let request = new XMLHttpRequest();
+
+            // настройка запроса:
+            request.open('POST', 'server.php');
+            // Content будет содержать данные, полученные из формы
+            // request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded'); //Отправка запроса в обычном формате
+            // Для отправки в .JSON формате
+            request.setRequestHeader('Content-type', 'appliction/json; charset=utf-8');
+
+            //Получение данных, введённых плоьзователем ч-з объект FormData:
+            //Чтобы полуить данные должна быть сформирована пара ключ-значение, 
+            //а для этого в input-ах должен быть присвоен атрибут name
+            let formData = new FormData(form);
+
+            // Преобразование данны полученных из формы в .JSON формат:
+            let obj = {};
+            formData.forEach(function(value, key) {
+                obj[key] = value; //Преобразование объекта formData в обычный читаемый объект
+            });
+            let json = JSON.stringify(obj); //метод .stringify преобразовывает объекты в .JSON формат
+
+
+            request.send(json);
+
+            request.addEventListener('readystatechange', () => {
+                if (request.readyState < 4) { //пока статус запроса не done
+                    statusMessage.innerHTML = message.loading; //здесь можно выводить прогресс бар, анимации
+                } else if (request.readyState === 4 && request.status == 200) { 
+                    statusMessage.innerHTML = message.success;
+                } else {
+                    statusMessage.innerHTML = message.failure;
+                }
+            });
+            //Цикл для очистки input-ов после отправки формы
+            for (let i = 0; i < input.length; i++) {
+                input[i].value = '';
+            }
+        });
+
+        ////////////////// Feedback Form ///////////
+
+        let feedbackForm = document.getElementById('form'),
+            feedbackInputs = feedbackForm.getElementsByTagName('input'),
+            feedbackSubmit = feedbackForm.getElementsByTagName('button');
+
+        feedbackForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            feedbackForm.appendChild(statusMessage);
+
+            let request = new XMLHttpRequest();
+
+            request.open('POST', 'server.php');
+            request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+            let formData = new FormData(form);
+
+            request.send(formData);
+
+            request.addEventListener('readystatechange', () => {
+                if (request.readyState < 4) {
+                    statusMessage.innerHTML = message.loading;
+                } else if (request.readyState === 4 && request.status == 200) {
+                    statusMessage.innerHTML = message.success;
+                } else {
+                    statusMessage.innerHTML = message.failure;
+                }
+            });
+
+            //Цикл для очистки input-ов после отправки формы
+            for (let i = 0; i < feedbackInputs.length; i++) {
+                feedbackInputs[i].value = '';
+            }
+
+        });
+
+
 });
 

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <input type="text" id="age" value="30">
+    <script>
+        let age = document.querySelector('#age');
+
+        function showUser(surname, name) {
+            alert('Пользователь ' + surname + " " + name + ', его возраст ' + this.value);
+        }
+        showUser();
+
+        showUser.apply(age, ["jesus", "Christ"]);
+
+    </script>
+</body>
+</html>
