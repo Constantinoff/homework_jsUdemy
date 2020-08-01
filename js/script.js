@@ -119,6 +119,7 @@ window.addEventListener('DOMContentLoaded', function() {
 
         more.addEventListener('click', () => {
             overlay.style.display = 'block'; //make .overlay visible
+            console.log(this);
             this.classList.add('more-splash'); //add animation, this. -
             // обращение к кнопке, которую нажали
             document.body.style.overflow = 'hidden'; //blocks page scrolling
@@ -126,7 +127,8 @@ window.addEventListener('DOMContentLoaded', function() {
 
         close.addEventListener('click', () => {
             overlay.style.display = 'none';
-            this.classList.remove('more-splash');
+            console.log(this);
+            more.classList.remove('more-splash');
             document.body.style.overflow = ''; //remowes overflow 'hidden'
         });
 
@@ -148,91 +150,141 @@ window.addEventListener('DOMContentLoaded', function() {
         };
 
         let form = document.querySelector('.main-form'),
-            input = form.getElementsByTagName('input'),
+            inputs = document.getElementsByTagName('input'),
+            feedbackForm = document.getElementById('form'),
             //переменная, которая будет принимать знач. message и выводить на страницу, чтобы оповестить пользователя, 
             statusMessage = document.createElement('div');
 
             statusMessage.classList.add('status');
+
+        function sendForm(elem) {
+            elem.addEventListener('submit', function(e) {
+                e.preventDefault();
+                elem.appendChild(statusMessage);
+
+                let formData = new FormData(elem);
+                console.log(formData);
+
+                // Function postData
+                function postData(data) {
+                    return new Promise(function(resolve, reject) {
+                        let request = new XMLHttpRequest();
+
+                        request.open('POST', 'server.php');
+                        request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+                        request.onreadystatechange = function() {
+                            if (request.readyState < 4) {
+                                resolve();
+                            } else if (request.readyState === 4) {
+                                if (request.status == 200 && request.status < 300) {
+                                    resolve();
+                                } else {
+                                    reject();
+                                }
+                            }
+                        };
+
+                        request.send(data);
+                    });
+                } //End postData
+
+                function clearInputs() {
+                    for (let i = 0; i < inputs.length; i++) {
+                        inputs[i].value = '';
+                    }
+                }
+
+                postData(formData)
+                    .then(() => statusMessage.innerHTML = message.loading)
+                    .then(() => statusMessage.innerHTML = message.success)
+                    
+                    .catch(() => statusMessage.innerHTML = message.failure)
+                    .then(clearInputs);
+            });
+        }
+
+        sendForm(form);
+        sendForm(feedbackForm);
         //Обрабочтик вешается не на отдельный submit button, а на ФОРМУ ЦЕЛИКОМ!!!
-        form.addEventListener('submit', function(event) {
-            //Поведение браузера по дефолту: click on submit => restart page, чтобы этого не было:
-            event.preventDefault();
-            form.appendChild(statusMessage);
+        // form.addEventListener('submit', function(event) {
+        //     //Поведение браузера по дефолту: click on submit => restart page, чтобы этого не было:
+        //     event.preventDefault();
+        //     form.appendChild(statusMessage);
 
-            let request = new XMLHttpRequest();
+        //     let request = new XMLHttpRequest();
 
-            // настройка запроса:
-            request.open('POST', 'server.php');
-            // Content будет содержать данные, полученные из формы
-            // request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded'); //Отправка запроса в обычном формате
-            // Для отправки в .JSON формате
-            request.setRequestHeader('Content-type', 'appliction/json; charset=utf-8');
+        //     // настройка запроса:
+        //     request.open('POST', 'server.php');
+        //     // Content будет содержать данные, полученные из формы
+        //     // request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded'); //Отправка запроса в обычном формате
+        //     // Для отправки в .JSON формате
+        //     request.setRequestHeader('Content-type', 'appliction/json; charset=utf-8');
 
-            //Получение данных, введённых плоьзователем ч-з объект FormData:
-            //Чтобы полуить данные должна быть сформирована пара ключ-значение, 
-            //а для этого в input-ах должен быть присвоен атрибут name
-            let formData = new FormData(form);
+        //     //Получение данных, введённых плоьзователем ч-з объект FormData:
+        //     //Чтобы полуить данные должна быть сформирована пара ключ-значение, 
+        //     //а для этого в input-ах должен быть присвоен атрибут name
+        //     let formData = new FormData(form);
 
-            // Преобразование данны полученных из формы в .JSON формат:
-            let obj = {};
-            formData.forEach(function(value, key) {
-                obj[key] = value; //Преобразование объекта formData в обычный читаемый объект
-            });
-            let json = JSON.stringify(obj); //метод .stringify преобразовывает объекты в .JSON формат
+        //     // Преобразование данны полученных из формы в .JSON формат:
+        //     let obj = {};
+        //     formData.forEach(function(value, key) {
+        //         obj[key] = value; //Преобразование объекта formData в обычный читаемый объект
+        //     });
+        //     let json = JSON.stringify(obj); //метод .stringify преобразовывает объекты в .JSON формат
 
 
-            request.send(json);
+        //     request.send(json);
 
-            request.addEventListener('readystatechange', () => {
-                if (request.readyState < 4) { //пока статус запроса не done
-                    statusMessage.innerHTML = message.loading; //здесь можно выводить прогресс бар, анимации
-                } else if (request.readyState === 4 && request.status == 200) { 
-                    statusMessage.innerHTML = message.success;
-                } else {
-                    statusMessage.innerHTML = message.failure;
-                }
-            });
-            //Цикл для очистки input-ов после отправки формы
-            for (let i = 0; i < input.length; i++) {
-                input[i].value = '';
-            }
-        });
+        //     request.addEventListener('readystatechange', () => {
+        //         if (request.readyState < 4) { //пока статус запроса не done
+        //             statusMessage.innerHTML = message.loading; //здесь можно выводить прогресс бар, анимации
+        //         } else if (request.readyState === 4 && request.status == 200) {
+        //             statusMessage.innerHTML = message.success;
+        //         } else {
+        //             statusMessage.innerHTML = message.failure;
+        //         }
+        //     });
+        //     //Цикл для очистки input-ов после отправки формы
+        //     for (let i = 0; i < input.length; i++) {
+        //         input[i].value = '';
+        //     }
+        // });
 
-        ////////////////// Feedback Form ///////////
+        // ////////////////// Feedback Form ///////////
 
-        let feedbackForm = document.getElementById('form'),
-            feedbackInputs = feedbackForm.getElementsByTagName('input'),
-            feedbackSubmit = feedbackForm.getElementsByTagName('button');
+        // let feedbackForm = document.getElementById('form'),
+        //     feedbackInputs = feedbackForm.getElementsByTagName('input');
 
-        feedbackForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            feedbackForm.appendChild(statusMessage);
+        // feedbackForm.addEventListener('submit', function(event) {
+        //     event.preventDefault();
+        //     feedbackForm.appendChild(statusMessage);
 
-            let request = new XMLHttpRequest();
+        //     let request = new XMLHttpRequest();
 
-            request.open('POST', 'server.php');
-            request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        //     request.open('POST', 'server.php');
+        //     request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 
-            let formData = new FormData(form);
+        //     let formData = new FormData(form);
 
-            request.send(formData);
+        //     request.send(formData);
 
-            request.addEventListener('readystatechange', () => {
-                if (request.readyState < 4) {
-                    statusMessage.innerHTML = message.loading;
-                } else if (request.readyState === 4 && request.status == 200) {
-                    statusMessage.innerHTML = message.success;
-                } else {
-                    statusMessage.innerHTML = message.failure;
-                }
-            });
+        //     request.addEventListener('readystatechange', function() {
+        //         if (request.readyState < 4) {
+        //             statusMessage.innerHTML = message.loading;
+        //         } else if (request.readyState === 4 && request.status == 200) {
+        //             statusMessage.innerHTML = message.success;
+        //         } else {
+        //             statusMessage.innerHTML = message.failure;
+        //         }
+        //     });
 
-            //Цикл для очистки input-ов после отправки формы
-            for (let i = 0; i < feedbackInputs.length; i++) {
-                feedbackInputs[i].value = '';
-            }
+        //     //Цикл для очистки input-ов после отправки формы
+        //     for (let i = 0; i < feedbackInputs.length; i++) {
+        //         feedbackInputs[i].value = '';
+        //     }
 
-        });
+        // });
 
 
 });
