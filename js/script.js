@@ -206,6 +206,119 @@ window.addEventListener('DOMContentLoaded', function() {
 
         sendForm(form);
         sendForm(feedbackForm);
+
+        /////////// Slider //////////////
+
+        let slideIndex = 1, //Параметр текущего слайда
+            slides = document.querySelectorAll('.slider-item'),
+            prev = document.querySelector('.prev'),
+            next = document.querySelector('.next'),
+            dotsWrap = document.querySelector('.slider-dots'),
+            dots = document.querySelectorAll('.dot');
+
+        showSlides(slideIndex); //вызываем ф-ция до её декларации со slideIndex=1
+
+        function showSlides(n) {// Ф-ция, которая скрывает все слайды на стр. и покажет тот, который нужен
+            //Реализация перехода от последнего слайда к 1му и наоборот
+            if (n > slides.length) {
+                slideIndex = 1;
+            }
+            if (n < 1) {
+                slideIndex = slides.length;
+            }
+            //
+            slides.forEach((item) => item.style.display = 'none');
+            // аналогично записи:
+            // for (let i = 0; i < slides.length; i++) {
+            //     slides[i].style.display('none');
+            // }
+            dots.forEach((item) => item.classList.remove('dot-active')); //делает все точки неактивными
+            slides[slideIndex - 1].style.display = 'block'; //делаем видимым выбраный слайд
+            dots[slideIndex - 1].classList.add('dot-active'); // делаем активной соответствующую точку
+        }
+        //Ф-ция, которая будет увеличивать п-р (n), номер текущего слайда
+        function plusSlides(n) {
+            showSlides(slideIndex += n);
+        }
+        // Ф-ция, которая определяет текущий слайд и устанавливает его
+        function currentSlide(n) {
+            showSlides(slideIndex = n);
+        }
+        // Вызываем ф-цию plusSlides со зн. -1 или +1 слайд от текущего по клику
+        prev.addEventListener('click', () => plusSlides(-1));
+        next.addEventListener('click', () => plusSlides(1));
+
+        // Реализация перемещения по слайдам при клике на точку, с пом. делегирования
+        dotsWrap.addEventListener('click', (event) => {
+            for (let i = 0; i < dots.length + 1; i++) {//dots.length + 1, Чтобы цикл доходил до 4ой точки
+                if (event.target.classList.contains('dot') && event.target == dots[i - 1]) { //dots[i - 1] Чтобы номер точки совпадал с номером слайда
+                    currentSlide(i);
+                }
+            }
+        });
+
+        ///////// Calc //////////
+
+        let persons = document.querySelectorAll('.counter-block-input')[0],
+            restDays = document.querySelectorAll('.counter-block-input')[1],
+            calcInputs = document.querySelectorAll('.counter-block-input'),
+            place = document.getElementById('select'),
+            totalValue = document.getElementById('total'),
+            //Переменные, которые будут получать данные от пользователя:
+            personsSum = 0,
+            daySum = 0,
+            total = 0;
+
+            totalValue.textContent = 0;
+
+            // В случае, если сумма расчитана, а знчение одного из инпутов удалено,
+            // ф-ция выдаст " totalValue = 0"
+            function checkValue() {
+                calcInputs.forEach((item) => {
+                    if (item.value == '' || item.value == null) {
+                        totalValue.innerHTML = 0;
+                    }
+                });
+            }
+
+            persons.addEventListener('change', function() {//'change' - сработает после ввода значения
+                //нельзя исп. arrFunc, потому что будет исп. контекст вызова (this)
+                personsSum = +this.value;
+                total = (daySum + personsSum)*4000;
+                //условие, если restDays не заполнен, то сумма не будет меняться
+                if(restDays.value == '') {
+                    totalValue.innerHTML = 0;
+                } else {
+                    totalValue.innerHTML = total;
+                }
+
+                checkValue();
+            });
+
+            restDays.addEventListener('change', function() {
+                daySum = +this.value;
+                total = (daySum + personsSum)*4000;
+                //условие, если restDays не заполнен, то сумма не будет меняться
+                if(persons.value == '') {
+                    totalValue.innerHTML = 0;
+                } else {
+                    totalValue.innerHTML = total;
+                }
+
+                checkValue();
+            });
+
+            // Расчёт к-нта place
+            place.addEventListener('change', function() {
+                if (restDays.value == '' || persons.value == '') {
+                   totalValue.innerHTML = 0; 
+                } else {
+                    let a = total; //тех-кая перемнная, чтобы при повторном выборе селекта, total не умножался повторно!
+                    totalValue.innerHTML = a * this.options[this.selectedIndex].value; //Значение value выбранного select-а
+                }
+            });
+
+    });
         //Обрабочтик вешается не на отдельный submit button, а на ФОРМУ ЦЕЛИКОМ!!!
         // form.addEventListener('submit', function(event) {
         //     //Поведение браузера по дефолту: click on submit => restart page, чтобы этого не было:
@@ -251,41 +364,5 @@ window.addEventListener('DOMContentLoaded', function() {
         //     }
         // });
 
-        // ////////////////// Feedback Form ///////////
 
-        // let feedbackForm = document.getElementById('form'),
-        //     feedbackInputs = feedbackForm.getElementsByTagName('input');
-
-        // feedbackForm.addEventListener('submit', function(event) {
-        //     event.preventDefault();
-        //     feedbackForm.appendChild(statusMessage);
-
-        //     let request = new XMLHttpRequest();
-
-        //     request.open('POST', 'server.php');
-        //     request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-
-        //     let formData = new FormData(form);
-
-        //     request.send(formData);
-
-        //     request.addEventListener('readystatechange', function() {
-        //         if (request.readyState < 4) {
-        //             statusMessage.innerHTML = message.loading;
-        //         } else if (request.readyState === 4 && request.status == 200) {
-        //             statusMessage.innerHTML = message.success;
-        //         } else {
-        //             statusMessage.innerHTML = message.failure;
-        //         }
-        //     });
-
-        //     //Цикл для очистки input-ов после отправки формы
-        //     for (let i = 0; i < feedbackInputs.length; i++) {
-        //         feedbackInputs[i].value = '';
-        //     }
-
-        // });
-
-
-});
 
